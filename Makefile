@@ -1,12 +1,7 @@
 VERSION = 3
 PATCHLEVEL = 0
-<<<<<<< HEAD
-SUBLEVEL = 8
+SUBLEVEL = 10
 EXTRAVERSION =
-=======
-SUBLEVEL = 9
-EXTRAVERSION = -Devil_14
->>>>>>> 6f286ca... 3.0.8-9 Patch for the Nexus S
 NAME = Sneaky Weasel
 
 # *DOCUMENTATION*
@@ -373,7 +368,8 @@ KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -fno-strict-aliasing -fno-common \
 		   -Werror-implicit-function-declaration \
 		   -Wno-format-security \
-		   -fno-delete-null-pointer-checks
+		   -fno-delete-null-pointer-checks \
+		   -mtune=cortex-a8 -mfpu=neon -ftree-vectorize -mfloat-abi=softfp
 KBUILD_AFLAGS_KERNEL :=
 KBUILD_CFLAGS_KERNEL :=
 KBUILD_AFLAGS   := -D__ASSEMBLY__
