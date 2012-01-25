@@ -156,7 +156,11 @@ static const u8 usb2_rh_dev_descriptor [18] = {
 
 	0x09,	    /*  __u8  bDeviceClass; HUB_CLASSCODE */
 	0x00,	    /*  __u8  bDeviceSubClass; */
+#ifdef CONFIG_USB_S3C_OTG_HOST
+	0x01,       /*  __u8  bDeviceProtocol; [ usb 2.0 single TT ] */
+#else
 	0x00,       /*  __u8  bDeviceProtocol; [ usb 2.0 no TT ] */
+#endif
 	0x40,       /*  __u8  bMaxPacketSize0; 64 Bytes */
 
 	0x6b, 0x1d, /*  __le16 idVendor; Linux Foundation */
@@ -2435,10 +2439,8 @@ int usb_add_hcd(struct usb_hcd *hcd,
 			&& device_can_wakeup(&hcd->self.root_hub->dev))
 		dev_dbg(hcd->self.controller, "supports USB remote wakeup\n");
 
-	/* enable irqs just before we start the controller,
-	 * if the BIOS provides legacy PCI irqs.
-	 */
-	if (usb_hcd_is_primary_hcd(hcd) && irqnum) {
+	/* enable irqs just before we start the controller */
+	if (usb_hcd_is_primary_hcd(hcd)) {
 		retval = usb_hcd_request_irqs(hcd, irqnum, irqflags);
 		if (retval)
 			goto err_request_irq;
