@@ -35,6 +35,8 @@
 #include <asm/cputime.h>
 #include <linux/earlysuspend.h>
 
+extern unsigned long get_cpuL1freq(void);
+
 /******************** Tunable parameters: ********************/
 
 /*
@@ -831,8 +833,10 @@ static int __init cpufreq_smartass_init(void)
 	down_rate_us = DEFAULT_DOWN_RATE_US;
 	/* sleep_ideal_freq = DEFAULT_SLEEP_IDEAL_FREQ; */
 	sleep_ideal_freq = min_freq;
-	sleep_wakeup_freq = DEFAULT_SLEEP_WAKEUP_FREQ;
-	awake_ideal_freq = DEFAULT_AWAKE_IDEAL_FREQ;
+	//sleep_wakeup_freq = DEFAULT_SLEEP_WAKEUP_FREQ;
+	sleep_wakeup_freq = get_cpuL1freq();
+	//awake_ideal_freq = DEFAULT_AWAKE_IDEAL_FREQ;
+	awake_ideal_freq = get_cpuL1freq();
 	sample_rate_jiffies = DEFAULT_SAMPLE_RATE_JIFFIES;
 	/* ramp_up_step = DEFAULT_RAMP_UP_STEP; */
 	ramp_up_step = min_freq * 2;
