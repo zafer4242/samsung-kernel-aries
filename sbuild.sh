@@ -7,16 +7,16 @@ kernel_ver="Mackay_kernel_0.22"
 export LOCALVERSION="-"`echo $kernel_ver`
 export ANDROID_BUILD_TOP=/home/kasper/android/system
 
-## make CROSS_COMPILE=$ANDROID_BUILD_TOP/prebuilt/linux-x86/toolchain/gcc-linaro-arm-linux-gnueabihf-2012.06-20120625_linux/bin/arm-linux-gnueabihf- ARCH=arm aries_galaxysmtd_defconfig
-make CROSS_COMPILE=$ANDROID_BUILD_TOP/prebuilt/linux-x86/toolchain/arm-eabi-4.4.3/bin/arm-eabi- ARCH=arm aries_galaxysmtd_defconfig
+make CROSS_COMPILE=$ANDROID_BUILD_TOP/prebuilt/linux-x86/toolchain/gcc-linaro-arm-linux-gnueabihf-2012.06-20120625_linux/bin/arm-linux-gnueabihf- ARCH=arm aries_galaxysmtd_defconfig
+## make CROSS_COMPILE=$ANDROID_BUILD_TOP/prebuilt/linux-x86/toolchain/arm-eabi-4.4.3/bin/arm-eabi- ARCH=arm aries_galaxysmtd_defconfig
 
-## make CROSS_COMPILE=$ANDROID_BUILD_TOP/prebuilt/linux-x86/toolchain/gcc-linaro-arm-linux-gnueabihf-2012.06-20120625_linux/bin/arm-linux-gnueabihf- ARCH=arm -j8 modules
-make CROSS_COMPILE=$ANDROID_BUILD_TOP/prebuilt/linux-x86/toolchain/arm-eabi-4.4.3/bin/arm-eabi- ARCH=arm -j8 modules
+make CROSS_COMPILE=$ANDROID_BUILD_TOP/prebuilt/linux-x86/toolchain/gcc-linaro-arm-linux-gnueabihf-2012.06-20120625_linux/bin/arm-linux-gnueabihf- ARCH=arm -j8 modules
+## make CROSS_COMPILE=$ANDROID_BUILD_TOP/prebuilt/linux-x86/toolchain/arm-eabi-4.4.3/bin/arm-eabi- ARCH=arm -j8 modules
 
 find $ANDROID_BUILD_TOP/kernel/samsung/aries -name '*.ko' -exec cp -v {} $ANDROID_BUILD_TOP/kernel/samsung/ics-ramdisk/ics_combo/files/modules \;
 
-## make CROSS_COMPILE=$ANDROID_BUILD_TOP/prebuilt/linux-x86/toolchain/gcc-linaro-arm-linux-gnueabihf-2012.06-20120625_linux/bin/arm-linux-gnueabihf- ARCH=arm -j8 zImage
-make CROSS_COMPILE=$ANDROID_BUILD_TOP/prebuilt/linux-x86/toolchain/arm-eabi-4.4.3/bin/arm-eabi- ARCH=arm -j8 zImage
+make CROSS_COMPILE=$ANDROID_BUILD_TOP/prebuilt/linux-x86/toolchain/gcc-linaro-arm-linux-gnueabihf-2012.06-20120625_linux/bin/arm-linux-gnueabihf- ARCH=arm -j8 zImage
+## make CROSS_COMPILE=$ANDROID_BUILD_TOP/prebuilt/linux-x86/toolchain/arm-eabi-4.4.3/bin/arm-eabi- ARCH=arm -j8 zImage
 
 cd arch/arm/boot
 tar cvf `echo $kernel_ver`.tar zImage
