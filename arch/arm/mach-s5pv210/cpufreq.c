@@ -81,15 +81,6 @@ static struct cpufreq_frequency_table s5pv210_freq_table[] = {
 	{0, CPUFREQ_TABLE_END},
 };
 
-extern int exp_UV_mV[5];
-unsigned int freq_uv_table[5][3] = {
-	{1000000, 1275, 1275},
-	{800000, 1200, 1200},
-	{400000, 1050, 1050},
-	{200000, 950, 950},
-	{100000, 950, 950},
-};
-
 static struct regulator *arm_regulator;
 static struct regulator *internal_regulator;
 
@@ -318,9 +309,7 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 		goto out;
 	}
 
-    /* update arm/int.volt according to uv settings, update freq_uv_table */
-	arm_volt = (dvs_conf[index].arm_volt - (exp_UV_mV[index]*1000));
-	freq_uv_table[index][2] = (int) arm_volt / 1000;
+	arm_volt = dvs_conf[index].arm_volt;
 	int_volt = dvs_conf[index].int_volt;
 
 	if (freqs.new > freqs.old) {
