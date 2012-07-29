@@ -73,6 +73,7 @@ enum s5pv210_dmc_port {
 };
 
 static struct cpufreq_frequency_table s5pv210_freq_table[] = {
+	{OC0, 1200*1000},
 	{L0, 1000*1000},
 	{L1, 800*1000},
 	{L2, 400*1000},
@@ -100,6 +101,10 @@ const unsigned long arm_volt_max = 1350000;
 const unsigned long int_volt_max = 1250000;
 
 static struct s5pv210_dvs_conf dvs_conf[] = {
+	[OC0] = {
+		.arm_volt   = 1275000,
+		.int_volt   = 1100000,
+	},
 	[L0] = {
 		.arm_volt   = 1275000,
 		.int_volt   = 1100000,
@@ -122,13 +127,16 @@ static struct s5pv210_dvs_conf dvs_conf[] = {
 	},
 };
 
-static u32 clkdiv_val[5][11] = {
+static u32 clkdiv_val[6][11] = {
 	/*
 	 * Clock divider value for following
 	 * { APLL, A2M, HCLK_MSYS, PCLK_MSYS,
 	 *   HCLK_DSYS, PCLK_DSYS, HCLK_PSYS, PCLK_PSYS,
 	 *   ONEDRAM, MFC, G3D }
 	 */
+
+	/* OC0 : [1000/200/100][166/83][133/66][200/200] */
+	{0, 5, 5, 1, 3, 1, 4, 1, 3, 0, 0},
 
 	/* L0 : [1000/200/100][166/83][133/66][200/200] */
 	{0, 4, 4, 1, 3, 1, 4, 1, 3, 0, 0},
@@ -200,8 +208,8 @@ void s5pv210_lock_dvfs_high_level(uint nToken, uint perf_level)
 	uint freq_level;
 	struct cpufreq_policy *policy;
 
-	printk(KERN_DEBUG "%s : lock with token(%d) level(%d) current(%X)\n",
-			__func__, nToken, perf_level, g_dvfs_high_lock_token);
+	//printk(KERN_DEBUG "%s : lock with token(%d) level(%d) current(%X)\n",
+	//		__func__, nToken, perf_level, g_dvfs_high_lock_token);
 
 	if (g_dvfs_high_lock_token & (1 << nToken))
 		return;
@@ -248,8 +256,8 @@ void s5pv210_unlock_dvfs_high_level(unsigned int nToken)
 
 	//mutex_unlock(&dvfs_high_lock);
 
-	printk(KERN_DEBUG "%s : unlock with token(%d) current(%X) level(%d)\n",
-			__func__, nToken, g_dvfs_high_lock_token, g_dvfs_high_lock_limit);
+	//printk(KERN_DEBUG "%s : unlock with token(%d) current(%X) level(%d)\n",
+	//		__func__, nToken, g_dvfs_high_lock_token, g_dvfs_high_lock_limit);
 }
 EXPORT_SYMBOL(s5pv210_unlock_dvfs_high_level);
 #endif
@@ -449,7 +457,7 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 		 * 6-1. Set PMS values
 		 * 6-2. Wait untile the PLL is locked
 		 */
-		if (index == L0)
+		if (index <= L0)
 			__raw_writel(APLL_VAL_1000, S5P_APLL_CON);
 		else
 			__raw_writel(APLL_VAL_800, S5P_APLL_CON);
