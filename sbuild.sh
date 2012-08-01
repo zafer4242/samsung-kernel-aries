@@ -2,7 +2,7 @@
 
 START=$(date +%s)
 
-kernel_ver="Mackay_kernel_0.35"
+kernel_ver="Mackay_kernel_0.36"
 
 export LOCALVERSION="-"`echo $kernel_ver`
 export ANDROID_BUILD_TOP=/home/kasper/android/system
