@@ -44,5 +44,5 @@ const char linux_banner[] =
 
 const char linux_proc_banner[] =
 	"%s version %s"
-	" (RemICS_UX_0.12)"
+	" (RemICS_UX_0.13)"
 	" (" LINUX_COMPILER ") %s\n";
