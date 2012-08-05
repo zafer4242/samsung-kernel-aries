@@ -2,7 +2,7 @@
 
 START=$(date +%s)
 
-kernel_ver="Remics_UX_0.13"
+kernel_ver="Remics_UX_0.14"
 
 export LOCALVERSION="-"`echo $kernel_ver`
 export ANDROID_BUILD_TOP=/home/kasper/android/system
