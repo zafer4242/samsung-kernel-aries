@@ -4,6 +4,14 @@ START=$(date +%s)
 
 kernel_ver="Mackay_kernel_0.39"
 
+export USE_CCACHE=1
+
+        CCACHE=ccache
+        CCACHE_COMPRESS=1
+        CCACHE_DIR="/home/kasper/android/ccache"
+	CCACHE_LOGFILE="/home/kasper/android/ccache/ccache-log"
+        export CCACHE_DIR CCACHE_COMPRESS CCACHE_LOGFILE
+
 export LOCALVERSION="-"`echo $kernel_ver`
 export ANDROID_BUILD_TOP=/home/kasper/android/system
 
