@@ -2,7 +2,7 @@
 
 START=$(date +%s)
 
-kernel_ver="Remics_UX_0.15"
+kernel_ver="Remics_UX_0.16"
 
 export USE_CCACHE=1
 
