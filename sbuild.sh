@@ -41,7 +41,7 @@ cd ../ics-ramdisk/cwm
 zip -r `echo $kernel_ver`.zip *
 
 mv  `echo $kernel_ver`.zip ../../kernelbuilds
-mv  `echo $kernel_ver`.tar ../../kernelbuilds
+mv  ../`echo $kernel_ver`.tar ../../kernelbuilds
 
 END=$(date +%s)
 ELAPSED=$((END - START))
