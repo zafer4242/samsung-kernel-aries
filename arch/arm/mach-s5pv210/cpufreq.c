@@ -32,7 +32,8 @@ static struct clk *dmc1_clk;
 static struct cpufreq_freqs freqs;
 static DEFINE_MUTEX(set_freq_lock);
 
-/* APLL M,P,S values for 1G/800Mhz */
+/* APLL M,P,S values for 1.2GHz/1GHz/800MHz */
+#define APLL_VAL_1200	((1 << 31) | (150 << 16) | (3 << 8) | 1)
 #define APLL_VAL_1000	((1 << 31) | (125 << 16) | (3 << 8) | 1)
 #define APLL_VAL_800	((1 << 31) | (100 << 16) | (3 << 8) | 1)
 
@@ -73,6 +74,7 @@ enum s5pv210_dmc_port {
 };
 
 static struct cpufreq_frequency_table s5pv210_freq_table[] = {
+	{OC0, 1200*1000},
 	{L0, 1000*1000},
 	{L1, 800*1000},
 	{L2, 400*1000},
@@ -97,14 +99,18 @@ static unsigned int g_dvfslockval[DVFS_LOCK_TOKEN_NUM];
 #endif
 
 #ifdef CONFIG_CUSTOM_VOLTAGE
-unsigned long arm_volt_max = 1350000;
+unsigned long arm_volt_max = 1400000;
 unsigned long int_volt_max = 1250000;
 #else
-const unsigned long arm_volt_max = 1350000;
+const unsigned long arm_volt_max = 1400000;
 const unsigned long int_volt_max = 1250000;
 #endif
 
 static struct s5pv210_dvs_conf dvs_conf[] = {
+	[OC0] = {
+		.arm_volt   = 1350000,
+		.int_volt   = 1125000,
+	},
 	[L0] = {
 		.arm_volt   = 1275000,
 		.int_volt   = 1100000,
@@ -127,13 +133,16 @@ static struct s5pv210_dvs_conf dvs_conf[] = {
 	},
 };
 
-static u32 clkdiv_val[5][11] = {
+static u32 clkdiv_val[6][11] = {
 	/*
 	 * Clock divider value for following
 	 * { APLL, A2M, HCLK_MSYS, PCLK_MSYS,
 	 *   HCLK_DSYS, PCLK_DSYS, HCLK_PSYS, PCLK_PSYS,
 	 *   ONEDRAM, MFC, G3D }
 	 */
+
+	/* OC0 : [1000/200/100][166/83][133/66][200/200] */
+	{0, 5, 5, 1, 3, 1, 4, 1, 3, 0, 0},
 
 	/* L0 : [1000/200/100][166/83][133/66][200/200] */
 	{0, 4, 4, 1, 3, 1, 4, 1, 3, 0, 0},
@@ -159,7 +168,7 @@ static bool pllbus_changing = false;
 static int oc_value = 100;
 
 static unsigned long sleep_freq;
-static unsigned long original_fclk[] = {1000000, 800000, 800000, 800000, 800000};
+static unsigned long original_fclk[] = {1200000, 1000000, 800000, 800000, 800000, 800000};
 
 static u32 apll_values[sizeof(original_fclk) / sizeof(unsigned long)];
 #endif
@@ -222,8 +231,8 @@ void s5pv210_lock_dvfs_high_level(uint nToken, uint perf_level)
 	uint freq_level;
 	struct cpufreq_policy *policy;
 
-	printk(KERN_DEBUG "%s : lock with token(%d) level(%d) current(%X)\n",
-			__func__, nToken, perf_level, g_dvfs_high_lock_token);
+	//printk(KERN_DEBUG "%s : lock with token(%d) level(%d) current(%X)\n",
+	//		__func__, nToken, perf_level, g_dvfs_high_lock_token);
 
 	if (g_dvfs_high_lock_token & (1 << nToken))
 		return;
@@ -270,8 +279,8 @@ void s5pv210_unlock_dvfs_high_level(unsigned int nToken)
 
 	//mutex_unlock(&dvfs_high_lock);
 
-	printk(KERN_DEBUG "%s : unlock with token(%d) current(%X) level(%d)\n",
-			__func__, nToken, g_dvfs_high_lock_token, g_dvfs_high_lock_limit);
+	//printk(KERN_DEBUG "%s : unlock with token(%d) current(%X) level(%d)\n",
+	//		__func__, nToken, g_dvfs_high_lock_token, g_dvfs_high_lock_limit);
 }
 EXPORT_SYMBOL(s5pv210_unlock_dvfs_high_level);
 #endif
@@ -352,7 +361,9 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 	cpufreq_notify_transition(&freqs, CPUFREQ_PRECHANGE);
 
 	/* Check if there need to change PLL */
-	if ((index == L0) || (priv_index == L0))
+	if ((index == OC0) || (priv_index == OC0))      // 1.2GHz
+		pll_changing = 1;
+	else if ((index == L0) || (priv_index == L0))   // 1GHz
 		pll_changing = 1;
 	else if ((index == L1) || (priv_index == L1))   // 800MHz
 		pll_changing = 1;
@@ -484,7 +495,9 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 #ifdef CONFIG_LIVE_OC
 		__raw_writel(apll_values[index], S5P_APLL_CON);
 #else
-		if (index == L0)
+		if (index == OC0)
+			__raw_writel(APLL_VAL_1200, S5P_APLL_CON);
+		else if (index == L0)
 			__raw_writel(APLL_VAL_1000, S5P_APLL_CON);
 		else
 			__raw_writel(APLL_VAL_800, S5P_APLL_CON);
@@ -915,7 +928,16 @@ static int __init s5pv210_cpu_init(struct cpufreq_policy *policy)
 	liveoc_init();
 #endif
 
-	return cpufreq_frequency_table_cpuinfo(policy, s5pv210_freq_table);
+	int val = cpufreq_frequency_table_cpuinfo(policy, s5pv210_freq_table);
+#ifdef CONFIG_S5PV210_CPUFREQ_SET_MINMAX
+	if (val) {
+		policy->cpuinfo.min_freq = CONFIG_S5PV210_CPUFREQ_MIN;
+		policy->cpuinfo.max_freq = CONFIG_S5PV210_CPUFREQ_MAX;
+	}
+	policy->min = CONFIG_S5PV210_CPUFREQ_MIN;
+	policy->max = CONFIG_S5PV210_CPUFREQ_MAX;
+#endif
+	return val;
 }
 
 static int s5pv210_cpufreq_notifier_event(struct notifier_block *this,
