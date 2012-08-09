@@ -2,7 +2,7 @@
 
 START=$(date +%s)
 
-kernel_ver="Mackay_kernel_0.43"
+kernel_ver="Mackay_kernel_0.44"
 
 export USE_CCACHE=1
 
