@@ -6,7 +6,7 @@ kernel_ver="Mackay_kernel_0.53"
 
 export LOCALVERSION="-"`echo $kernel_ver`
 export ANDROID_BUILD_TOP=/home/kasper/android/system
-export TOOLCHAIN=$ANDROID_BUILD_TOP/prebuilt/linux-x86/toolchain/arm-eabi-4.4.3/bin/arm-eabi-
+export TOOLCHAIN=$ANDROID_BUILD_TOP/prebuilts/gcc/linux-x86/arm/arm-eabi-4.6/bin/arm-eabi-
 
 make CROSS_COMPILE=$TOOLCHAIN ARCH=arm aries_galaxysmtd_defconfig
 
