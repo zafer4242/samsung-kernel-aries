@@ -336,7 +336,9 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 	cpufreq_notify_transition(&freqs, CPUFREQ_PRECHANGE);
 
 	/* Check if there need to change PLL */
-	if ((index == L0) || (priv_index == L0))        // 1000MHz
+	if ((index == OC0) || (priv_index == OC0))      // 1200MHz
+		pll_changing = 1;
+	else if ((index == L0) || (priv_index == L0))   // 1000MHz
 		pll_changing = 1;
 	else if ((index == L1) || (priv_index == L1))   // 800MHz
 		pll_changing = 1;
