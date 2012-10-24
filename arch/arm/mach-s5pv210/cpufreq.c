@@ -343,7 +343,7 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 	/* Check if there need to change PLL */
 	if ((index <= L0) || (freqs.old >= s5pv210_freq_table[L0].frequency))
 		pll_changing = 1;
-	else if ((index == L1) || (priv_index == L1))   // 800MHz
+	else if ((index == L1) || (freqs.old == s5pv210_freq_table[L1].frequency))   // 800MHz
 		pll_changing = 1;
 
 	/* Check if there need to change System bus clock */
