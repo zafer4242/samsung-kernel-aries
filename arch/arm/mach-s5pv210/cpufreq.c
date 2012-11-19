@@ -32,10 +32,8 @@ static struct clk *dmc1_clk;
 static struct cpufreq_freqs freqs;
 static DEFINE_MUTEX(set_freq_lock);
 
-/* APLL M,P,S values for 1.3-1GHz/800Mhz */
-#define APLL_VAL_1300	((1 << 31) | (325 << 16) | (6 << 8) | 1)
+/* APLL M,P,S values for 1.2G/1G/800Mhz */
 #define APLL_VAL_1200	((1 << 31) | (150 << 16) | (3 << 8) | 1)
-#define APLL_VAL_1100   ((1 << 31) | (141 << 16) | (3 << 8) | 1)
 #define APLL_VAL_1000	((1 << 31) | (125 << 16) | (3 << 8) | 1)
 #define APLL_VAL_800	((1 << 31) | (100 << 16) | (3 << 8) | 1)
 
@@ -76,9 +74,7 @@ enum s5pv210_dmc_port {
 };
 
 static struct cpufreq_frequency_table s5pv210_freq_table[] = {
-	{OC0, 1300*1000},
-	{OC1, 1200*1000},
-	{OC2, 1100*1000},
+	{OC0, 1200*1000},
 	{L0, 1000*1000},
 	{L1, 800*1000},
 	{L2, 400*1000},
@@ -112,14 +108,6 @@ const unsigned long int_volt_max = 1250000;
 
 static struct s5pv210_dvs_conf dvs_conf[] = {
 	[OC0] = {
-		.arm_volt   = 1325000,
-		.int_volt   = 1125000,
-	},
-	[OC1] = {
-		.arm_volt   = 1275000,
-		.int_volt   = 1100000,
-	},
-	[OC2] = {
 		.arm_volt   = 1275000,
 		.int_volt   = 1100000,
 	},
@@ -145,7 +133,7 @@ static struct s5pv210_dvs_conf dvs_conf[] = {
 	},
 };
 
-static u32 clkdiv_val[8][11] = {
+static u32 clkdiv_val[6][11] = {
 	/*
 	 * Clock divider value for following
 	 * { APLL, A2M, HCLK_MSYS, PCLK_MSYS,
@@ -153,13 +141,7 @@ static u32 clkdiv_val[8][11] = {
 	 *   ONEDRAM, MFC, G3D }
 	 */
 
-	/* OC0 : [1300/200/200/100][166/83][133/66][200/200] */
-	{0, 5.5, 5.5, 1, 3, 1, 4, 1, 3, 0, 0},
-
-	/* OC1 : [1200/200/100][166/83][133/66][200/200] */
-	{0, 5, 5, 1, 3, 1, 4, 1, 3, 0, 0},
-
-	/* OC2 : [1100/200/200/100][166/83][133/66][200/200] */
+	/* OC0 : [1200/200/100][166/83][133/66][200/200] */
 	{0, 5, 5, 1, 3, 1, 4, 1, 3, 0, 0},
 
 	/* L0 : [1000/200/100][166/83][133/66][200/200] */
@@ -482,13 +464,7 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 		 */
 		switch (index) {
 		case OC0:
-			__raw_writel(APLL_VAL_1300, S5P_APLL_CON);
-			break;
-		case OC1:
 			__raw_writel(APLL_VAL_1200, S5P_APLL_CON);
-			break;
-		case OC2:
-			__raw_writel(APLL_VAL_1100, S5P_APLL_CON);
 			break;
 		case L0:
 			__raw_writel(APLL_VAL_1000, S5P_APLL_CON);
