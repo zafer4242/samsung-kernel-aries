@@ -418,7 +418,7 @@ static struct s5pv210_cpufreq_voltage smdkc110_cpufreq_volt[] = {
 		.varm	= 1350000,
 		.vint	= 1150000,
 	}, {
-		.freq	= 1000000,
+		.freq	= 1200000,
 		.varm	= 1275000,
 		.vint	= 1100000,
 	}, {
@@ -4871,7 +4871,7 @@ static int wlan_power_en(int onoff)
 		s3c_gpio_slp_setpull_updown(GPIO_WLAN_BT_EN,
 					S3C_GPIO_PULL_NONE);
 
-		msleep(80);
+		msleep(200);
 	} else {
 		gpio_set_value(GPIO_WLAN_nRST, GPIO_LEVEL_LOW);
 		s3c_gpio_slp_cfgpin(GPIO_WLAN_nRST, S3C_GPIO_SLP_OUT0);
