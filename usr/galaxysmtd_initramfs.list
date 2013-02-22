@@ -43,9 +43,6 @@ dir /sdcard 755 0 0
 dir /lvm 755 0 0
 dir /lvm/etc 755 0 0
 dir /lvm/sbin 755 0 0
-dir /tmp 755 0 0
-file /tmp/aromafm.zip source/usr/galaxysmtd_initramfs_files/tmp/aromafm.zip 755 0 0
-file /tmp/aromafm.zip.cfg source/usr/galaxysmtd_initramfs_files/tmp/aromafm.zip.cfg 755 0 0
 file /lvm/etc/lvm.conf source/usr/galaxysmtd_initramfs_files/lvm.conf 755 0 0
 file /lvm/sbin/lvm source/usr/galaxysmtd_initramfs_files/lvm 755 0 0
 file /stage1/busybox source/usr/galaxysmtd_initramfs_files/busybox 755 0 0
