@@ -1,0 +1,206 @@
+#!/jb_rec_init/sbin/busybox sh
+#
+# PURPOSE:
+# ONE KERNEL IMAGE WITH ONE INITRAMFS FLASHABLE WITH HEIMDALL/ODIN 
+#
+# ORIGINAL AUTHORS:
+# Stratosk & Mialwe
+#
+# BACKGROUND
+# CyanogenMod currently uses an init system with two separate initramfs
+# images which are packed into the kernel image at compile time.
+# During every boot process the needed initramfs image (recovery
+# or Android) gets extracted and the boot process continues using 
+# the freshly extracted initramfs. A CWM zip has to be used to 
+# install the kernel and it's modules/support files.
+#
+# With this initscript there will be one initramfs only, without
+# the need to pack/extract anything and a reduced risk for 
+# boot issues resulting from this processes. Additionally the
+# generated kernel image can be flashed directly via Heimdall/Odin.
+# 
+# CYANOGENMOD KERNEL SOURCE:
+# CM10.1: https://github.com/CyanogenMod/android_kernel_samsung_aries
+#
+# ADAPTED:
+# This initramfs has been adapted by kasper_h/kasperhettinga to make
+# it possible to run two separate recoveries (CWM & TWRP) based on a
+# single boot.img implementation. This work is based on a similar
+# implementation by DerTeufel
+#
+# INITRAMFS STRUCTURE:
+# /
+#  -- /jb_init            (complete Android initramfs)
+#  -- /jb_init_rec        (complete recovery initramfs)
+#  -- /files/lib          (modules, 720p libs & led notif)
+#  -- init (this script)
+#  -- erase_image (binary)
+# 
+
+
+export _PATH="$PATH"
+export PATH=/
+
+# set busybox location, save busybox as we will move directories
+/jb_rec_init/sbin/busybox cp /jb_rec_init/sbin/recovery /busybox
+BB="/busybox"
+
+# initialize working dir and log
+$BB cd /
+$BB date >>boot.txt
+exec >>boot.txt 2>&1
+
+$BB rm init
+
+$BB echo "generating mount directories..."
+$BB mkdir proc
+$BB mkdir sys
+$BB mkdir cache
+$BB mkdir sdcard
+$BB mkdir system
+$BB mkdir data
+
+$BB mkdir /dev
+$BB mkdir /dev/block
+
+$BB echo "generating device nodes..."
+$BB mknod /dev/block/mmcblk0 b 179 0
+$BB mknod /dev/block/mmcblk0p1 b 179 1
+$BB mknod /dev/block/mmcblk0p2 b 179 2
+$BB mknod /dev/block/mmcblk0p3 b 179 3
+$BB mknod /dev/block/mtdblock2 b 31 2
+$BB mknod /dev/block/mtdblock3 b 31 3
+$BB mknod /dev/urandom c 1 9
+
+$BB echo "mounting devices..."
+$BB mount -t proc proc /proc
+$BB mount -t sysfs sysfs /sys
+$BB mv /files/charger /
+$BB mv /files/init /
+
+while ! $BB test -d /sys/dev/block/179:0 ; do
+    echo "Waiting for internal mmc..."
+    $BB sleep 1
+done
+
+/lvm/sbin/lvm vgscan --mknodes --ignorelockingfailure
+/lvm/sbin/lvm vgchange -aly --ignorelockingfailure
+
+$BB mount -t ext4 /dev/lvpool/system /system
+$BB mount -t yaffs2 /dev/block/mtdblock3 /cache
+$BB mount -t ext4 /dev/lvpool/userdata /data
+$BB mv /cache/boot.txt /cache/boot.bak
+
+KV=`$BB uname -r`
+$BB echo "version: $KV"
+
+if $BB [ ! -d /system/lib/modules ]; then 
+    $BB echo "making modules directory"
+    $BB mkdir /system/lib/modules
+    $BB chmod 777 /system/lib/modules
+fi
+
+INSTALLED_VER=$($BB cat /system/.mackay)
+$BB echo $INSTALLED_VER
+
+if $BB [ "`/busybox grep $KV /system/lib/modules/ansi_cprng.ko`" ] && $BB [ "$KV" = "$INSTALLED_VER" ]; then
+    $BB echo "kernel files already installed, nothing to do"
+elif $BB [ "`/busybox grep $KV /files/lib/modules/ansi_cprng.ko`" ]; then
+    $BB echo "updating modules..."
+
+    $BB echo "removing old modules..."
+
+    $BB rm /system/lib/modules/*
+    $BB echo "updating modules..."
+    $BB cp /files/lib/modules/* /system/lib/modules/
+
+    if $BB [ ! -d /system/etc/init.d ]; then 
+	$BB echo "making init.d"
+	$BB mkdir /system/etc/init.d
+	$BB chmod 777 /system/etc/init.d
+    fi
+
+fi
+
+if $BB [ -f /data/local/.bln ]; then
+    $BB echo "updating BLN lights.aries.so..."
+    $BB cp /files/lib/hw/lights.aries.so.bln /system/lib/hw/lights.aries.so
+else
+    $BB echo "updating CM led lights.aries.so..."
+    $BB cp /files/lib/hw/lights.aries.so.cm /system/lib/hw/lights.aries.so
+fi
+
+$BB chmod 644 /system/lib/hw/lights.aries.so
+
+$BB umount /data
+
+if $BB [ "$KV" != "$INSTALLED_VER" ]; then
+	$BB echo $KV > /system/.mackay
+fi
+
+$BB echo "command line:"
+$BB cat /proc/cmdline
+
+$BB echo "starting bootmode detection..."
+if $BB test -e /cache/.startrecovery || $BB grep -q bootmode=2 /proc/cmdline || $BB grep -q bootmode=9 /proc/cmdline ; then
+    # recovery boot
+    $BB echo "found recovery command, preparing boot..."
+	$BB rm -fr /cache/.startrecovery
+
+    if $BB [ -f /data/local/.twrp ] ; then
+    $BB echo "moving twrp to /"
+    $BB mv /twrp/* /
+    else
+    $BB echo "moving jb_rec_init to /"
+    $BB mv /jb_rec_init/* /
+    $BB echo 0 > /sys/class/power_supply/battery/charging_mode_booting
+    fi
+else
+    $BB mv /jb_init/* /
+fi
+
+if $BB grep -q 1 /sys/class/power_supply/battery/charging_mode_booting ; then
+    # low power mode
+    $BB echo "found charging_mode command"
+    $BB cp /lpm.rc /init.rc
+    $BB rm /init.aries.rc
+fi
+
+$BB echo "debug output:"
+$BB echo "current /:"
+$BB ls -l /
+$BB echo "current /system:"
+$BB ls -l /system/
+#$BB echo "current /cache:"
+#$BB ls -l /cache/
+$BB echo "current /system/lib/modules:"
+$BB ls -l /system/lib/modules/
+$BB echo "current /system/lib/hw:"
+$BB ls -l /system/lib/hw/
+
+$BB echo "cleaning up step 1..."
+$BB umount /sys
+$BB umount /proc
+$BB umount /system
+$BB cp /boot.txt /cache/
+$BB umount /cache
+$BB rm -r /files
+$BB rm -r /sdcard
+
+# original initramfs directories not needed anymore,
+# busybox not needed anymore...
+$BB echo "cleaning up step 2..."
+$BB rm -rf /jb_init
+$BB rm -rf /jb_rec_init
+$BB rm -rf /twrp
+
+$BB date >>boot.txt
+$BB rm -fr /dev/*
+
+# finally remove busybox
+$BB echo "cleaning up step 3..."
+$BB rm /busybox
+
+export PATH="${_PATH}"
+$BB echo "execute init..."
+exec /init

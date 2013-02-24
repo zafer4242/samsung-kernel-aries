@@ -32,6 +32,7 @@ modules.builtin
 *.lzo
 *.patch
 *.gcno
+arch/arm/boot/compressed/ashldi3.S
 
 #
 # Top-level generic files
