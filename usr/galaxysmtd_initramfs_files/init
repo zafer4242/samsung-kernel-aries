@@ -25,10 +25,15 @@ image=/stage1/ramdisk.img
 if busybox test -e /cache/.startrecovery || busybox grep -q bootmode=2 /proc/cmdline ; then
 	# recovery boot
 	busybox rm -fr /cache/.startrecovery
-	image=/stage1/ramdisk-recovery.img
+	if busybox test -e /cache/.twrp
+		image=/stage1/ramdisk-recovery-twrp.img
+	elif
+		image=/stage1/ramdisk-recovery-cwm.img
+	fi
 
 	# disable lpm
 	busybox echo 0 > /sys/class/power_supply/battery/charging_mode_booting
+
 elif ! busybox test -e /system/build.prop ; then
 	# emergency boot
 	busybox umount /cache
