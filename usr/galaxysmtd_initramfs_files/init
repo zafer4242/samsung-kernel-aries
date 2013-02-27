@@ -18,7 +18,40 @@ done
 /lvm/sbin/lvm vgchange -aly --ignorelockingfailure
 
 busybox mount -t ext4 /dev/lvpool/system /system
+busybox mount -t ext4 /dev/lvpool/userdata /data
 busybox mount -t yaffs2 /dev/block/mtdblock3 /cache
+
+if busybox [ ! -d /data/local/mackay ]; then 
+    busybox echo "making Mackay directory"
+    busybox mkdir /data/local/mackay
+fi
+
+if busybox [ -f /data/local/mackay/bln ]; then
+    LEDCHOSEN="BLN"
+else
+    LEDCHOSEN="CMLED"
+fi
+
+if busybox [ -f /data/local/mackay/blnactive ]; then
+    LEDACTIVE="BLN"
+else
+    LEDACTIVE="CMLED"
+fi
+
+if busybox [ "$LEDCHOSEN" != "$LEDACTIVE" ]; then
+    busybox echo "lights.aries.so... needs to be updated"
+    if busybox [ -f /data/local/mackay/bln ]; then
+        busybox echo "updating BLN lights.aries.so..."
+        busybox cp /hw/lights.aries.so.bln /system/lib/hw/lights.aries.so
+        busybox chmod 644 /system/lib/hw/lights.aries.so
+        busybox touch /data/local/mackay/blnactive
+    else
+        busybox echo "updating CM led lights.aries.so..."
+        busybox cp /hw/lights.aries.so.cm /system/lib/hw/lights.aries.so
+        busybox chmod 644 /system/lib/hw/lights.aries.so
+        busybox rm /data/local/mackay/blnactive
+    fi
+fi
 
 image=/stage1/ramdisk.img
 
@@ -50,7 +83,9 @@ elif ! busybox test -e /system/build.prop ; then
 	busybox echo 0 > /sys/class/power_supply/battery/charging_mode_booting
 fi
 
+busybox cp /boot.txt /cache/
 busybox umount /cache
+busybox umount /data
 busybox umount /system
 busybox umount /sdcard
 busybox rmdir /sdcard
